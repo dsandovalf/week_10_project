@@ -9,7 +9,6 @@ class Config():
     SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI")
     SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS")
 
-
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
@@ -26,10 +25,9 @@ def verify_password(email, password):
 
 class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String, unique=True, index=True)
+    email = db.Column(db.String, index=True, unique=True)
     password = db.Column(db.String)
-    posts = db.relationship('Post', backref='author', lazy='dynamic', cascade='all, delete-orphan')
-    
+    posts = db.relationship("Post", backref="author", lazy="dynamic", cascade='all, delete-orphan')
 
     def hash_password(self, original_password):
         return generate_password_hash(original_password)
@@ -67,16 +65,16 @@ class Post(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
-    
+
     def __repr__(self):
-        return f'<{self.post_id}|{self.body}>'
+        return f'<{self.post_id}>'
 
     def from_dict(self, data):
         self.body = data['body']
         self.user_id = data['user_id']
 
     def to_dict(self):
-        return {"user_id": self.user_id, "body": self.body, "post_id": self.post_id}
+        return {"user_id":self.user_id, "body":self.body, "post_id":self.post_id}
 
 @app.get('/login')
 @basic_auth.login_required()
@@ -91,7 +89,6 @@ def get_users():
 def get_user(user_id):
     return make_response(User.query.get(user_id).to_dict(), 200)
 
-# Create a user
 @app.post('/user')
 def post_user():
     data = request.get_json()
@@ -100,7 +97,6 @@ def post_user():
     new_user.save()
     return make_response("success",200)
 
-# Changes user info
 @app.put('/user/<int:user_id>')
 def put_user(user_id):
     data = request.get_json()
@@ -114,9 +110,7 @@ def delete_user(user_id):
     User.query.get(user_id).delete()
     return make_response("success",200)
 
-
-############# POST ###################
-@app.get('/post')
+@app.get('/posts')
 def get_posts():
     return make_response({"posts":[post.to_dict() for post in Post.query.all()]}, 200)
 
